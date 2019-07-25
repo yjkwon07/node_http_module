@@ -52,7 +52,10 @@
         전송된 POST 데이터를 받아서 파일에 저장하고, 
         그 결과 페이지로 리다이렉션하는 방법에 대해서 알아보겠습니다.
 
-    16. 
+    16. App - 글수정 - 수정 링크 생성 => 
+        글 수정 기능을 구현하기 위해서 수정 링크를 추가하는 법을 살펴봅니다. 
+
+    17. 
 
 */
 const http = require('http');
@@ -61,7 +64,7 @@ const url = require('url');
 const qs = require('querystring');
 
 
-function templateHTML(title, list, body) {
+function templateHTML(title, list, body, control) {
     return `
         <!doctype html>
         <html>
@@ -72,6 +75,7 @@ function templateHTML(title, list, body) {
         <body>
             <h1><a href="/">WEB</a></h1>
             ${list}
+            ${control}
             ${body}
         </body>
         </html>
@@ -98,7 +102,10 @@ const app = http.createServer((request, response) => {
                 const title = 'Welcome';
                 const description = 'Hello, Node.js';
                 const list = templateList(filelist);
-                const template = templateHTML(title, list, `<h2>${title}</h2>${description}`);
+                const template = templateHTML(title, list, 
+                    `<h2>${title}</h2>${description}`, 
+                    '<a href="/create">create</a>'
+                    );
                 response.writeHead(200);
                 response.end(template);
             });
@@ -108,7 +115,9 @@ const app = http.createServer((request, response) => {
                 fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
                     const title = queryData.id;
                     const list = templateList(filelist);
-                    const template = templateHTML(title, list, `<h2>${title}</h2>${description}`);
+                    const template = templateHTML(title, list, 
+                        `<h2>${title}</h2>${description}`, 
+                        `<a href="/create">create</a> <a href="/?id=${title}">update</a>`);
                     response.writeHead(200);
                     response.end(template);
                 });
@@ -132,7 +141,7 @@ const app = http.createServer((request, response) => {
                         <input type = "submit">
                     </p>
                 </form>
-            `);
+            `, '');
             response.writeHead(200);
             response.end(template);
         });
