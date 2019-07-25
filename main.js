@@ -147,10 +147,11 @@ const app = http.createServer((request, response) => {
             const post = qs.parse(body);    
             const title = post.title;
             const description = post.description;
+            fs.writeFile(`data/${title}`, description, 'utf8', (error) => {
+                response.writeHead(302, {Location: `/?id=${title}`});
+                response.end();
+            })
         });
-        response.writeHead(200);
-
-        response.end('SUCESS');
     }
 
     else {
