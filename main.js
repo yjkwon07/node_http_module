@@ -55,14 +55,16 @@
     16. App - 글수정 - 수정 링크 생성 => 
         글 수정 기능을 구현하기 위해서 수정 링크를 추가하는 법을 살펴봅니다. 
 
-    17. 
+    17. 글수정 - 수정할 정보 전송 =>
+        수정할 내용을 서버로 전송하는 법을 살펴봅니다.
+
+    18. 글수정 - 수정된 내용 저장
 
 */
 const http = require('http');
 const fs = require('fs');
 const url = require('url');
 const qs = require('querystring');
-
 
 function templateHTML(title, list, body, control) {
     return `
@@ -84,7 +86,7 @@ function templateHTML(title, list, body, control) {
 
 function templateList(filelist) {
     let list = '<ul>';
-    for (let i =0; i < filelist.length; i++) {
+    for (let i = 0; i < filelist.length; i++) {
         list += `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
     }
     list += '</ul>';
@@ -97,15 +99,16 @@ const app = http.createServer((request, response) => {
     const pathname = url.parse(_url, true).pathname;
     console.log(pathname);
     if (pathname === '/') {
+
         if (queryData.id === undefined) {
             fs.readdir('./data', (error, filelist) => {
                 const title = 'Welcome';
                 const description = 'Hello, Node.js';
                 const list = templateList(filelist);
-                const template = templateHTML(title, list, 
-                    `<h2>${title}</h2>${description}`, 
+                const template = templateHTML(title, list,
+                    `<h2>${title}</h2>${description}`,
                     '<a href="/create">create</a>'
-                    );
+                );
                 response.writeHead(200);
                 response.end(template);
             });
@@ -115,21 +118,22 @@ const app = http.createServer((request, response) => {
                 fs.readFile(`data/${queryData.id}`, 'utf8', function (err, description) {
                     const title = queryData.id;
                     const list = templateList(filelist);
-                    const template = templateHTML(title, list, 
-                        `<h2>${title}</h2>${description}`, 
-                        `<a href="/create">create</a> <a href="/?id=${title}">update</a>`);
+                    const template = templateHTML(title, list,
+                        `<h2>${title}</h2>${description}`,
+                        `<a href="/create">create</a> <a href="update?id=${title}">update</a>`);
                     response.writeHead(200);
                     response.end(template);
                 });
             });
         }
+
     }
 
-    else if(pathname === '/create') {
-        fs.readdir('./data', function(error, filelist) {
+    else if (pathname === '/create') {
+        fs.readdir('./data', function (error, filelist) {
             const title = 'WEB - create';
             const list = templateList(filelist);
-            const template = templateHTML(title , list , `
+            const template = templateHTML(title, list, `
                 <form action="create_process" method="POST">
                     <p>
                         <input type = "text" name="title" placeholder="title">
@@ -147,19 +151,43 @@ const app = http.createServer((request, response) => {
         });
     }
 
-    else if(pathname === '/create_process') {
+    else if (pathname === '/create_process') {
         let body = "";
         request.on('data', (data) => {
             body += data;
         });
         request.on('end', () => {
-            const post = qs.parse(body);    
+            const post = qs.parse(body);
             const title = post.title;
             const description = post.description;
             fs.writeFile(`data/${title}`, description, 'utf8', (error) => {
-                response.writeHead(302, {Location: `/?id=${title}`});
+                response.writeHead(302, { Location: `/?id=${title}` });
                 response.end();
-            })
+            });
+        });
+    }
+    else if (pathname === '/update') {
+        fs.readdir('./data', (error, filelist) => {
+            fs.readFile(`./data/${queryData.id}`, 'utf8', (error, description) => {
+                const title = queryData.id;
+                const list = templateList(filelist);
+                const template = templateHTML(title, list,
+                    ` 
+                        <form action = "/update_process" method="post">
+                            <input type="hidden" name = "id" value="${title}">
+                            <p>
+                                <input type="text" name = "title" value = "${title}"/>
+                           </p>
+                            <p>
+                                <textarea type="text" name ="description" value="${description}">${description}</textarea>
+                            </p>
+                            <input type="submit">
+                        </form>
+                    `,
+                    `<a href = "/create">create</a> <a href="/update?id${title}">update</a>`);
+                response.writeHead(200);
+                response.end(template);
+            });
         });
     }
 
