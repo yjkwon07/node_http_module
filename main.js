@@ -4,14 +4,22 @@ const url = require('url');
 const qs = require('querystring');
 const path = require('path');
 const template = require('./lib/template.js');
+const sanitizedHtml = require('sanitize-html');
+
 
 const app = http.createServer((request, response) => {
     const _url = request.url;
     const queryData = url.parse(_url, true).query;
     const pathname = url.parse(_url, true).pathname;
     console.log(pathname);
-    if (pathname === '/') {
+    if (queryData.id !== undefined) {
+        console.log(path.parse(queryData.id));
+    }
+    else {
+        console.log(`queryDataid === undefined`);
+    }
 
+    if (pathname === '/') {
         if (queryData.id === undefined) {
             fs.readdir('./data', (_error, filelist) => {
                 const title = 'Welcome';
@@ -28,19 +36,23 @@ const app = http.createServer((request, response) => {
         else {
             fs.readdir('./data', function (_error, filelist) {
                 const filteredId = path.parse(queryData.id).base;
-                fs.readFile(`data/${filteredId}`, 'utf8', function (_eror, description) {
+                fs.readFile(`./data/${filteredId}`, 'utf8', function (_eror, description) {
                     const title = queryData.id;
+                    const sanitizedTitle = sanitizedHtml(title);
+                    const sanitizedDescription = sanitizedHtml(description, {
+                        allowedTags: ['h1']
+                    });
                     const list = template.List(filelist);
-                    const html = template.HTML(title, list,
+                    const html = template.HTML(sanitizedTitle, list,
                         `   
-                            <h2>${title}</h2>
-                            ${description}
+                            <h2>${sanitizedTitle}</h2>
+                            ${sanitizedDescription}
                         `,
                         `
                             <a href="/create">create</a> 
-                            <a href="update?id=${title}">update</a>
+                            <a href="update?id=${sanitizedTitle}">update</a>
                             <form action='/delete_process' method="POST">
-                                <input type = "hidden" name = "id" value="${title}"/>
+                                <input type = "hidden" name = "id" value="${sanitizedTitle}"/>
                                 <input type = "submit" value="delete">
                             </form>
                         `);
@@ -49,7 +61,6 @@ const app = http.createServer((request, response) => {
                 });
             });
         }
-
     }
 
     else if (pathname === '/create') {
@@ -89,6 +100,7 @@ const app = http.createServer((request, response) => {
             });
         });
     }
+
     else if (pathname === '/update') {
         fs.readdir('./data', (error, filelist) => {
             const filteredId = path.parse(queryData.id).base;
@@ -126,7 +138,7 @@ const app = http.createServer((request, response) => {
             const title = post.title;
             const description = post.description;
             const filteredId = path.parse(id).base;
-            const filteredTitle = path.parse(title).base; 
+            const filteredTitle = path.parse(title).base;
             fs.rename(`./data/${filteredId}`, `data/${filteredTitle}`, function (_error) {
                 fs.writeFile(`data/${title}`, description, 'utf8', function (_error) {
                     response.writeHead(302, { Location: `/?id=${title}` });
