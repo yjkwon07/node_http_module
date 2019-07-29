@@ -5,7 +5,14 @@ const qs = require('querystring');
 const path = require('path');
 const template = require('./lib/template.js');
 const sanitizedHtml = require('sanitize-html');
-
+const mysql = require('mysql');
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'B_board'
+});
+db.connect();
 
 const app = http.createServer((request, response) => {
     const _url = request.url;
@@ -21,41 +28,37 @@ const app = http.createServer((request, response) => {
 
     if (pathname === '/') {
         if (queryData.id === undefined) {
-            fs.readdir('./data', (_error, filelist) => {
-                const title = 'Welcome';
-                const description = 'Hello, Node.js';
-                const list = template.List(filelist);
-                const html = template.HTML(title, list,
-                    `<h2>${title}</h2>${description}`,
-                    '<a href="/create">create</a>'
+            const title = "welcome to nodeJS";
+            const description = "<h1>what is web??</h1>";
+            db.query(`SELECT * FROM topic`, (_error, topics) => {
+                console.log(topics);
+                const list = template.db_List(topics);
+                const html = template.HTML(title, list, description,
+                    `<a href='/create'>create</a>`
                 );
                 response.writeHead(200);
                 response.end(html);
             });
         }
         else {
-            fs.readdir('./data', function (_error, filelist) {
-                const filteredId = path.parse(queryData.id).base;
-                fs.readFile(`./data/${filteredId}`, 'utf8', function (_eror, description) {
-                    const title = queryData.id;
-                    const sanitizedTitle = sanitizedHtml(title);
-                    const sanitizedDescription = sanitizedHtml(description, {
-                        allowedTags: ['h1']
-                    });
-                    const list = template.List(filelist);
-                    const html = template.HTML(sanitizedTitle, list,
-                        `   
-                            <h2>${sanitizedTitle}</h2>
-                            ${sanitizedDescription}
-                        `,
-                        `
-                            <a href="/create">create</a> 
-                            <a href="update?id=${sanitizedTitle}">update</a>
-                            <form action='/delete_process' method="POST">
-                                <input type = "hidden" name = "id" value="${sanitizedTitle}"/>
-                                <input type = "submit" value="delete">
+            db.query(`SELECT * FROM topic`, (error, topics) => {
+                if (error) throw error;
+                db.query(`SELECT * FROM topic WHERE id = ?`, [queryData.id], (error2, topic) => {
+                    if (error2) throw error2;
+                    const title = topic[0].title;
+                    const description = topic[0].description;
+                    const list = template.db_List(topics);
+                    const html = template.HTML(title, list, `
+                            <h2>${title}</h2>${description}
+                        `, `
+                            <a href="/create">create</a>
+                            <a href="/update?id=${queryData.id}">update</a>
+                            <form action="delete_process" method="POST">
+                                <input type = "hidden" name = 'id' value = ${queryData.id}/>
+                                <input type = "submit" value ="delete"/>
                             </form>
-                        `);
+                            `
+                    );
                     response.writeHead(200);
                     response.end(html);
                 });
@@ -66,7 +69,7 @@ const app = http.createServer((request, response) => {
     else if (pathname === '/create') {
         fs.readdir('./data', function (_error, filelist) {
             const title = 'WEB - create';
-            const list = template.List(filelist);
+            const list = template.data_List(filelist);
             const html = template.HTML(title, list, `
                 <form action="create_process" method="POST">
                     <p>
