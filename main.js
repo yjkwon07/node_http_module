@@ -67,22 +67,23 @@ const app = http.createServer((request, response) => {
     }
 
     else if (pathname === '/create') {
-        fs.readdir('./data', function (_error, filelist) {
-            const title = 'WEB - create';
-            const list = template.data_List(filelist);
+        db.query(`SELECT * FROM topic`, (error, topics) => {
+            if (error) throw error;
+            const title = "Create topic";
+            const list = template.db_List(topics);
             const html = template.HTML(title, list, `
-                <form action="create_process" method="POST">
-                    <p>
-                        <input type = "text" name="title" placeholder="title">
-                    </p>
-                    <p>
-                        <textarea name="description" placeholder="description"></textarea>
-                    </p>
-                    <p>
-                        <input type = "submit">
-                    </p>
-                </form>
-            `, '');
+            <form action="/create_process" method="post">
+                <p>
+                    <input type="text" name="title" placeholder="title">
+                </p>
+                <p>
+                    <textarea name="description" placeholder="description"></textarea>
+                </p>
+                <p>
+                    <input type="submit" value="submit">
+                </p>
+            </form>
+           `, '');
             response.writeHead(200);
             response.end(html);
         });
@@ -95,38 +96,41 @@ const app = http.createServer((request, response) => {
         });
         request.on('end', () => {
             const post = qs.parse(body);
-            const title = post.title;
-            const description = post.description;
-            fs.writeFile(`data/${title}`, description, 'utf8', (_error) => {
-                response.writeHead(302, { Location: `/?id=${title}` });
-                response.end();
-            });
+            db.query(`INSERT INTO topic (title, description, created, author_id) 
+            VALUES(?, ?, NOW(), ?)`, [post.title, post.description, 1],
+                (error, result) => {
+                    if (error) throw error;
+                    response.writeHead(302, { Location: `/?id=${result.insertId}` });
+                    response.end();
+                });
         });
     }
 
     else if (pathname === '/update') {
-        fs.readdir('./data', (error, filelist) => {
-            const filteredId = path.parse(queryData.id).base;
-            fs.readFile(`./data/${filteredId}`, 'utf8', (_error, description) => {
-                const title = queryData.id;
-                const list = template.List(filelist);
-                const html = template.HTML(title, list,
-                    ` 
+        db.query(`SELECT * FROM topic`, (error, topics) => {
+            if (error) throw error;
+            db.query(`SELECT * FROM topic WHERE id = ?`, [queryData.id],
+                (error2, topic) => {
+                    if (error2) throw error2;
+                    const title = topic[0].title;
+                    const list = template.db_List(topics);
+                    const html = template.HTML(title, list,
+                        ` 
                         <form action = "/update_process" method="post">
-                            <input type="hidden" name = "id" value="${title}">
+                            <input type="hidden" name = "id" value="${topic[0].id}">
                             <p>
-                                <input type="text" name = "title" value = "${title}"/>
+                                <input type="text" name = "title" value = "${topic[0].title}"/>
                            </p>
                             <p>
-                                <textarea type="text" name ="description" value="${description}">${description}</textarea>
+                                <textarea type="text" name ="description" value="${topic[0].description}">${topic[0].description}</textarea>
                             </p>
                             <input type="submit">
                         </form>
                     `,
-                    `<a href = "/create">create</a> <a href="/update?id${title}">update</a>`);
-                response.writeHead(200);
-                response.end(html);
-            });
+                        `<a href = "/create">create</a> <a href="/update?id${topic[0].id}">update</a>`);
+                    response.writeHead(200);
+                    response.end(html);
+                });
         });
     }
 
@@ -137,41 +141,35 @@ const app = http.createServer((request, response) => {
         });
         request.on('end', () => {
             const post = qs.parse(body);
-            const id = post.id;
-            const title = post.title;
-            const description = post.description;
-            const filteredId = path.parse(id).base;
-            const filteredTitle = path.parse(title).base;
-            fs.rename(`./data/${filteredId}`, `data/${filteredTitle}`, function (_error) {
-                fs.writeFile(`data/${title}`, description, 'utf8', function (_error) {
-                    response.writeHead(302, { Location: `/?id=${title}` });
-                    response.end();
-                })
-            });
+            console.log(post);
+            db.query('UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?', [post.title, post.description, post.id], function(error, result){
+                response.writeHead(302, {Location: `/?id=${post.id}`});
+                response.end();
+              });
         });
     }
 
     else if (pathname === '/delete_process') {
-        let body = '';
-        request.on('data', (data) => {
-            body += data;
+    let body = '';
+    request.on('data', (data) => {
+        body += data;
+    });
+    request.on('end', () => {
+        const post = qs.parse(body);
+        const id = post.id;
+        const filteredId = path.parse(id).base;
+        fs.unlink(`./data/${filteredId}`, (_error) => {
+            response.writeHead(302, { Location: `/` });
+            response.end();
         });
-        request.on('end', () => {
-            const post = qs.parse(body);
-            const id = post.id;
-            const filteredId = path.parse(id).base;
-            fs.unlink(`./data/${filteredId}`, (_error) => {
-                response.writeHead(302, { Location: `/` });
-                response.end();
-            });
-        });
+    });
 
-    }
+}
 
-    else {
-        response.writeHead(404);
-        response.end('Not found');
-    }
+else {
+    response.writeHead(404);
+    response.end('Not found');
+}
 });
 
 app.listen(3000);
