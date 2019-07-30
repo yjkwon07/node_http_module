@@ -1,6 +1,7 @@
 const http = require('http');
 const url = require('url');
 const topic = require('./lib/topic');
+const author = require('./lib/author');
 
 const app = http.createServer((request, response) => {
     const _url = request.url;
@@ -28,6 +29,12 @@ const app = http.createServer((request, response) => {
     }
     else if (pathname === '/delete_process') {
         topic.delete_process(request, response);    
+    }
+    else if(pathname === '/author') {
+        author.main(request, response);
+    }
+    else if(pathname === '/author/create_process') {
+        author.create_process(request, response);
     }
     else {
         response.writeHead(404);
