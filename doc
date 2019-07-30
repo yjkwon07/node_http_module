@@ -32,6 +32,17 @@
     pm2 list 
     pm2 log
     pm2 monit
+    pm2 kill : pm2로 실행한 모든 프로세스를 중지 & 삭제 합니다. 
+    pm2 start main.js --watch --ignore-watch="data/* sessions/*"  --no-daemon 
+    pm2를 실행하면서 로그가 출력되도록 합니다. 
+    (--no-daemon) 또 특정 디랙토리에 대한 watch를 하지 않도록 하는 방법입니다
+
+    ***
+    --ignore-watch 해결방법
+    pm2 init 혹은 pm2 ecosystem을 입력해주면 ecosystem.config.js 파일이 생성됩니다.
+    pm2 설정파일 생성 사이트링크 : http://pm2.keymetrics.io......on/
+    apps 설정부분에 ignore_watch: ["data/*", "sessions/*"]를 추가해주시면 해결됩니다
+    ***
 
 13. App - 글생성 UI 만들기 => create 분기문/ form tag생성
 
@@ -66,6 +77,36 @@ fs.rename(`./data/${id}`, `data/${title}`, function(error){
                 })
         });
 
-19. App - 글삭제 - 삭제버튼 구현        
+19. App - 글삭제 - 삭제버튼 구현 => 
+    삭제 작업을 하기 위해서는 삭제 버튼이 있어야 합니다. 
+    이 때 링크를 사용하는 안됩니다. 
+    링크 대신 form을 이용해서 삭제 버튼을 만드는 방법을 살펴보겠습니다. 
+
+20. App -객체를 이용해서 템플릿 기능 정리 정돈하기 => 
+    객체를 이용해서 탬플릿 기능을 정리 정돈하는 법을 소개합니다. 
+
+21. Node.js - 모듈의 형식 => 
+    많아진 코드를 정리 정돈하는 가장 큰 도구인 모듈의 형식을 살펴보겠습니다. 
+    mpart.js
+
+22. App 제작 - 모듈의 활용 =>
+    입력정보와 관련해서 보안적으로 처리해야 할 이슈를 살펴보겠습니다.  
+
+23. App - 입력 정보에 대한 보안 => 
+    데이터를 읽어 올 때, 파일의 아이디를 가져온다. 
+    하지만 사용자가 ../같이 상위 디렉토리 탐색 문구를 넣게 되면 
+    사용자에게 서버의 파일을 읽어들일 수 있는 심각한 문제가 있다.
+    작은 해결 => path.parse()
+
+24. App - 출력정보에 대한 보안 => XSS
+  sanitize-html using
+
+25. API => Application Programming Interface
+    API라는 중요한 개념의 의미를 알아보고, 지금까지 베일에 쌓여있었던 createServer API의 의미를 살펴보겠습니다
+
+
+
+
+
 
 
