@@ -142,34 +142,34 @@ const app = http.createServer((request, response) => {
         request.on('end', () => {
             const post = qs.parse(body);
             console.log(post);
-            db.query('UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?', [post.title, post.description, post.id], function(error, result){
-                response.writeHead(302, {Location: `/?id=${post.id}`});
-                response.end();
-              });
+            db.query('UPDATE topic SET title=?, description=?, author_id=1 WHERE id=?', [post.title, post.description, post.id],
+                (error, _result) => {
+                    if (error) throw error;
+                    response.writeHead(302, { Location: `/?id=${post.id}` });
+                    response.end();
+                });
         });
     }
 
     else if (pathname === '/delete_process') {
-    let body = '';
-    request.on('data', (data) => {
-        body += data;
-    });
-    request.on('end', () => {
-        const post = qs.parse(body);
-        const id = post.id;
-        const filteredId = path.parse(id).base;
-        fs.unlink(`./data/${filteredId}`, (_error) => {
-            response.writeHead(302, { Location: `/` });
-            response.end();
+        let body = '';
+        request.on('data', (data) => {
+            body += data;
         });
-    });
+        request.on('end', () => {
+            const post = qs.parse(body);
+            db.query(`DELETE FROM topic WHERE id = ?`, [post.id], (error, result) => {
+                if (error) throw error;
+                response.writeHead(302, { Location: `/` });
+                response.end();
+            });
+        });
+    }
 
-}
-
-else {
-    response.writeHead(404);
-    response.end('Not found');
-}
+    else {
+        response.writeHead(404);
+        response.end('Not found');
+    }
 });
 
 app.listen(3000);
