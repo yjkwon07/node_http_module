@@ -43,7 +43,7 @@ const app = http.createServer((request, response) => {
         else {
             db.query(`SELECT * FROM topic`, (error, topics) => {
                 if (error) throw error;
-                db.query(`SELECT * FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id=?`,[queryData.id], function(error2, topic){
+                db.query(`SELECT * FROM topic LEFT JOIN author ON topic.author_id=author.id WHERE topic.id=?`, [queryData.id], function (error2, topic) {
                     if (error2) throw error2;
                     const title = topic[0].title;
                     const description = topic[0].description;
@@ -71,10 +71,12 @@ const app = http.createServer((request, response) => {
     else if (pathname === '/create') {
         db.query(`SELECT * FROM topic`, (error, topics) => {
             if (error) throw error;
-            const title = "Create topic";
-            const list = template.db_List(topics);
-            const html = template.HTML(title, list, `
-            <form action="/create_process" method="post">
+            db.query(`SELECT * FROM author`, (error2, authors) => {
+                if (error2) throw error2;
+                const title = "Create topic";
+                const list = template.db_List(topics);
+                const html = template.HTML(title, list, `
+            <form action="/create_process" method="POST">
                 <p>
                     <input type="text" name="title" placeholder="title">
                 </p>
@@ -82,12 +84,16 @@ const app = http.createServer((request, response) => {
                     <textarea name="description" placeholder="description"></textarea>
                 </p>
                 <p>
+                    ${template.authorSelect(authors)}
+                </p>
+                <p>
                     <input type="submit" value="submit">
                 </p>
             </form>
            `, '');
-            response.writeHead(200);
-            response.end(html);
+                response.writeHead(200);
+                response.end(html);
+            });
         });
     }
 
@@ -99,7 +105,7 @@ const app = http.createServer((request, response) => {
         request.on('end', () => {
             const post = qs.parse(body);
             db.query(`INSERT INTO topic (title, description, created, author_id) 
-            VALUES(?, ?, NOW(), ?)`, [post.title, post.description, 1],
+            VALUES(?, ?, NOW(), ?)`, [post.title, post.description, post.author],
                 (error, result) => {
                     if (error) throw error;
                     response.writeHead(302, { Location: `/?id=${result.insertId}` });
