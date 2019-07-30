@@ -1,0 +1,23 @@
+<head>
+    <style>
+        table{
+            border-collapse: collapse;
+        }
+        td{
+            border:1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <form action="/author/create_process" method="post">
+        <p>
+            <input type="text" name="name" placeholder="name">
+        </p>
+        <p>
+            <textarea name="profile" placeholder="description"></textarea>
+        </p>
+        <p>
+            <input type="submit"  value="create">
+        </p>
+    </form>
+</body>
