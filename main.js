@@ -4,15 +4,8 @@ const url = require('url');
 const qs = require('querystring');
 const path = require('path');
 const template = require('./lib/template.js');
-const sanitizedHtml = require('sanitize-html');
-const mysql = require('mysql');
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '123456',
-    database: 'B_board'
-});
-db.connect();
+const db = require('./lib/db');
+
 
 const app = http.createServer((request, response) => {
     const _url = request.url;
