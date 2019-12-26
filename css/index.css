@@ -1,0 +1,14 @@
+body {
+    margin: 0px;
+    padding: 0px; 
+    text-align: center;
+}
+
+ul, li {
+   list-style: none; 
+}
+textarea {
+    width: 300px;
+    height: 300px;
+}
+
